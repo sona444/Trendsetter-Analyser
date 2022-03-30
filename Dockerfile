@@ -1,17 +1,11 @@
-# set base image (host OS)
-FROM python:3.8
+FROM python:3.6
 
-# set the working directory in the container
-WORKDIR /code
+ENV FLASK_APP run.py
 
-# copy the dependencies file to the working directory
-COPY requirements.txt .
+COPY run.py gunicorn-cfg.py requirements.txt config.py .env ./
+COPY app app
 
-# install dependencies
-RUN pip3 install -r requirements.txt
+RUN pip install -r requirements.txt
 
-# copy the content of the local src directory to the working directory
-# COPY src/ .
-
-# command to run on container start
-CMD [ "python", "./app.py" ]
+EXPOSE 5005
+CMD ["gunicorn", "--config", "gunicorn-cfg.py", "run:app"]

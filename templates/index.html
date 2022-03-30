@@ -14,9 +14,7 @@
     <div class="container form">
     <div class="row reg-form">
     <h1 style=" text-align:center;font-weight:800;">Automatic Sentiment Analyser</h1>
-
         <form id="sentiment-form"  class="was-validated" style="margin-bottom:45px;">
-            
             <div class="mb-3">
                 <label for="Name" class="form-label">Enter a statement</label>
                 <input type="text" class="form-control" id="statement" required />
@@ -25,12 +23,101 @@
             </div>
             <span style="width:100%;"><button type="submit" class="btn" id="btn-send">Submit</button></span>
           </form>
-		  <div></div>
+      <div class="drag-area">
+      <form id="upload-form" name="fileupload"  action = "upload-dataset" method = "POST" enctype = "multipart/form-data">
+    <div class="icon"><i class="fas fa-cloud-upload-alt"></i></div>
+      <header>Drag & Drop to Upload File</header>
+      <span>OR</span>
+      <button>Browse File</button>
+      <input type="file" id="uploaded" name="file" accept=".xlsx,.xls,.csv">
+    </div>
+    <input type="submit" id="upload" value="Submit">
+      </form>
+      <!--<span style="width:100%;"><button type="submit" class="btn" id="file-submit-btn">Upload</button></span>-->
     </div>
   </div>
 </section>
 </main>
 <script>
+//selecting all required elements
+const dropArea = document.querySelector(".drag-area"),
+dragText = dropArea.querySelector("header"),
+button = dropArea.querySelector("button"),
+input = dropArea.querySelector("input");
+let file; //this is a global variable and we'll use it inside multiple functions
+
+button.onclick = ()=>{
+  input.click(); //if user click on the button then the input also clicked
+}
+
+input.addEventListener("change", function(){
+  //getting user select file and [0] this means if user select multiple files then we'll select only the first one
+  file = this.files[0];
+  dropArea.classList.add("active");
+  showFile(); //calling function
+});
+
+
+//If user Drag File Over DropArea
+dropArea.addEventListener("dragover", (event)=>{
+  event.preventDefault(); //preventing from default behaviour
+  dropArea.classList.add("active");
+  dragText.textContent = "Release to Upload File";
+});
+
+//If user leave dragged File from DropArea
+dropArea.addEventListener("dragleave", ()=>{
+  dropArea.classList.remove("active");
+  dragText.textContent = "Drag & Drop to Upload File";
+});
+
+//If user drop File on DropArea
+dropArea.addEventListener("drop", (event)=>{
+  event.preventDefault(); //preventing from default behaviour
+  //getting user select file and [0] this means if user select multiple files then we'll select only the first one
+  file = event.dataTransfer.files[0];
+  showFile(); //calling function
+});
+
+function showFile(){
+  let fileType = file.type; //getting selected file type
+  console.log(fileType);
+  let validExtensions = ["image/jpeg", "image/jpg", "image/png","application/vnd.ms-excel", "spreadsheet/xlsx","spreadsheet/xls","spreadsheet/csv"]; //adding some valid image extensions in array
+  if(validExtensions.includes(fileType)){ //if user selected file is an image file
+    let fileReader = new FileReader(); //creating new FileReader object
+    fileReader.onload = ()=>{
+      let fileURL = fileReader.result; //passing user file source in fileURL variable
+        // UNCOMMENT THIS BELOW LINE. I GOT AN ERROR WHILE UPLOADING THIS POST SO I COMMENTED IT
+      // let imgTag = `<img src="${fileURL}" alt="image">`; //creating an img tag and passing user selected file source inside src attribute
+      dropArea.innerHTML = imgTag; //adding that created img tag inside dropArea container
+    }
+    fileReader.readAsDataURL(file);
+  }else{
+    alert("This is not an Image File!");
+    dropArea.classList.remove("active");
+    dragText.textContent = "Drag & Drop to Upload File";
+  }
+}
+
+/*$(document).on('click', '#upload', function(e){
+    e.preventDefault();
+    let formData = new FormData();   
+    let fileupload=$("#upload-form");      
+    console.log(fileupload.files[0]); 
+    formData.append("file", $("#uploaded").val());
+        $.ajax({
+            type: 'POST',
+            url: "/upload-dataset",
+            data: formData,
+            contentType: false,
+            cache: false,
+            processData: false,
+            success: function(data) {
+                console.log('Success!');
+            },
+        });
+    });
+*/
 $(document).on('click', '#btn-send', function(e){
     e.preventDefault();
     var form = $('#sentiment-form');
