@@ -1,1 +1,175 @@
-{{data | safe}}
+{% extends "layout/base.html" %}
+
+{% block title %}Trendsetter Analyser{% endblock %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}<style>
+#myChart2 div{
+  height:500px !important;
+}
+
+</style>{% endblock stylesheets %}
+
+{% block body_class %} landing-page {% endblock body_class %}
+
+{% block content %}
+
+<main>
+    <section>
+        <div class="container">
+            <div class="row">
+            <form  class="was-validated" style="margin-bottom:45px;"id="textToSpeech">
+                 <div class="mb-3">
+                    <label for="Name" class="form-label">What do you want from the given dataset?</label>
+                    <input type="text" class="form-control" id="statement" required />
+                    <div class="valid-feedback"></div>
+                    <div class="invalid-feedback"></div>
+                    {% if final_report %}
+                        {% for keys,value in final_report.items() %} 
+                        <input type=text hidden value={{value}} name="{{keys}}" id="{{keys}}">
+                        {% endfor %}
+                    {% endif %}
+                    {% if db %}
+                        <input type=text hidden value={{db}} name="db" id="db">
+                    {% endif %}
+                    <input type="submit" id="upload" value="Submit">
+                </div>
+                <div id="if-not-get"></div>
+            </form>
+            <form  class="was-validated" style="margin-bottom:45px;" id="product-details" >
+                 <div class="mb-3">
+                    <label for="Name" class="form-label">Get Insight about a product</label>
+                    {% if products %}
+                    <select name="products" id="product">
+                        {% for product in products %}
+                            <option value="{{product}}">{{product}}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    {% if final_report %}
+                        {% for keys,value in final_report.items() %} 
+                        <input type=text hidden value={{value}} name="{{keys}}" id="{{keys}}">
+                        {% endfor %}
+                    {% endif %}
+                    <input type="submit" id="upload" value="Submit">
+                </div>
+            </form>
+        <div id="myChart" style="float:left;"></div>
+        <div id="myChart2" style="float:left;"></div>
+        <div id="image">
+        </div>
+            </div>
+        </div>
+    </section>
+</main>
+<script>
+$(document).on('submit', '#textToSpeech', function(e){
+    e.preventDefault();
+    var form = $('#textToSpeech');
+    let statement = $('#statement').val();
+    let review = $('#review').val();
+    let order_status = $('#order-status').val();
+    let db = $('#db').val();
+    console.log(statement);
+    jsondata={
+      "statement":statement,
+      "review":review,
+      "order_status":order_status,
+      "db":db
+    }
+    $("#btn-send").prop("disabled", true);
+    $.ajax({
+      type: "POST",
+      data: jsondata,
+      url:"/get-query",
+        complete: function(resp){
+          const myObj = JSON.parse(resp.responseText);
+          console.log(myObj);
+          $("#btn-send").prop("disabled", false); 
+          document.getElementById('if-not-get').innerHTML=`To give you a more precise response please confirm the product you want <br><form>
+          <radio>
+          <value></value
+          </radio>
+          </form>`;
+        }
+          });
+});
+$(document).on('submit', '#product-details', function(e){
+    e.preventDefault();
+    var form = $('#product-details');
+    let products = $('#product').val();
+    let review = $('#review').val();
+    let order_status = $('#order-status').val();
+    console.log(statement);
+    jsondata={
+      "products":products,
+      "review":review,
+      "order_status":order_status
+    }
+    $("#btn-send").prop("disabled", true);
+    $.ajax({
+      type: "POST",
+      data: jsondata,
+      url:"/get-insights",
+        complete: function(resp){
+          const myObj = JSON.parse(resp.responseText);
+          console.log(myObj);
+          $("#btn-send").prop("disabled", false); 
+
+          if (review=='True'){
+            document.getElementById('myChart').style.height='500px';
+            document.getElementById('myChart').style.width='100%';
+              google.charts.load('current', {'packages':['corechart']});
+          google.charts.setOnLoadCallback(drawChart);
+
+          function drawChart(){
+          var key = "review"; 
+          var ar = Object.entries(resp.responseJSON[key]).map(([a, b]) => [a, Number(b)]);
+          console.log(ar);
+          var data = new google.visualization.DataTable();
+          data.addColumn('string', 'Impact');
+          data.addColumn('number', 'Quantity');
+          data.addRows(ar);
+
+
+          var options = {
+            title:'There are '+myObj.review['neg']+' Negative Reviews and '+myObj.review['pos']+' Positive Reviews of "'+products+'"',
+            is3D:true
+          };
+
+          var chart = new google.visualization.PieChart(document.getElementById('myChart'));
+            chart.draw(data, options);
+          }
+          }
+
+          document.getElementById('image').innerHTML='<img src='+myObj.img+'>';
+          if (order_status=='True'){
+            document.getElementById('myChart2').style.height='500px';
+            document.getElementById('myChart2').style.width='100%';
+              google.charts.load('current', {'packages':['corechart']});
+          google.charts.setOnLoadCallback(drawChart);
+          function drawChart(){
+          var key = "status"; 
+          var ar = Object.entries(resp.responseJSON[key]).map(([a, b]) => [a, Number(b)]);
+          console.log(ar);
+          var data = new google.visualization.DataTable();
+          data.addColumn('string', 'Status');
+          data.addColumn('number', 'Quantity');
+          data.addRows(ar);
+
+          var options = {
+            title:'Orders Insights of Product "' + products + '"',
+            is3D:true
+          };
+
+          var chart = new google.visualization.PieChart(document.getElementById('myChart2'));
+            chart.draw(data, options);
+            console.log(true);
+          }
+          }
+          }
+        
+          });
+});
+</script>
+{% endblock content %}

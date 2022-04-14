@@ -1,6 +1,6 @@
 {% extends "layout/base.html" %}
 
-{% block title %}Sentiment Analyser App{% endblock %}
+{% block title %}Trendsetter Analyser{% endblock %}
 
 <!-- Specific Page CSS goes HERE  -->
 {% block stylesheets %}{% endblock stylesheets %}
@@ -14,27 +14,10 @@
     <div class="container form">
     <div class="row reg-form">
     <h1 style=" text-align:center;font-weight:800;">Automatic Sentiment Analyser</h1>
-        <form id="sentiment-form"  class="was-validated" style="margin-bottom:45px;">
-            <div class="mb-3">
-                <label for="Name" class="form-label">Enter a statement</label>
-                <input type="text" class="form-control" id="statement" required />
-                <div class="valid-feedback"></div>
-                <div class="invalid-feedback"></div>
-            </div>
-            <span style="width:100%;"><button type="submit" class="btn" id="btn-send">Submit</button></span>
-          </form>
-      <div class="drag-area">
       <form id="upload-form" name="fileupload"  action = "upload-dataset" method = "POST" enctype = "multipart/form-data">
-    <div class="icon"><i class="fas fa-cloud-upload-alt"></i></div>
-      <header>Drag & Drop to Upload File</header>
-      <span>OR</span>
-      <button>Browse File</button>
-      <input type="file" id="uploaded" name="file" accept=".xlsx,.xls,.csv">
-    </div>
-    <input type="submit" id="upload" value="Submit">
+        <input type="file" id="uploaded" name="file" accept=".xlsx,.xls,.csv">
+        <input type="submit" id="upload" value="Submit">
       </form>
-      <!--<span style="width:100%;"><button type="submit" class="btn" id="file-submit-btn">Upload</button></span>-->
-    </div>
   </div>
 </section>
 </main>

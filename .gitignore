@@ -4,3 +4,5 @@
 Dockerfile
 /migrations
 .minio.sys
+/db
+/static/datasets
