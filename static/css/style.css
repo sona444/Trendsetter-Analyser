@@ -5,6 +5,37 @@
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
 }
+.header{
+  background-color:white;
+}
+.navbar-brand{
+  text-align:center;
+  font-weight:800; 
+  color:#E20074;
+  font-size:41px !important;
+  padding-top: 25px !important;
+}
+section.register-form{
+  padding-top: 15%;
+  padding-left:33.3%;
+  height: 50vh;
+}
+#upload{
+  font-weight: 800;
+    background-color: white;
+    border: 0;
+    padding: 7px;
+    color: #e20074;
+    border-radius: 8px;
+}
+input#file-upload-button{
+  font-weight: 800;
+    background-color: white;
+    border: 0;
+    padding: 7px;
+    color: #e20074;
+    border-radius: 8px;
+}
 .drag-area{
   border: 2px dashed #fff;
   background-color: #5256ad;

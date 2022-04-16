@@ -34,6 +34,7 @@
                     {% endif %}
                     <input type="submit" id="upload" value="Submit">
                 </div>
+                <div id="myChart3" style="float:left;"></div>
                 <div id="if-not-get"></div>
             </form>
             <form  class="was-validated" style="margin-bottom:45px;" id="product-details" >
@@ -86,11 +87,50 @@ $(document).on('submit', '#textToSpeech', function(e){
           const myObj = JSON.parse(resp.responseText);
           console.log(myObj);
           $("#btn-send").prop("disabled", false); 
-          document.getElementById('if-not-get').innerHTML=`To give you a more precise response please confirm the product you want <br><form>
-          <radio>
-          <value></value
-          </radio>
-          </form>`;
+          if (myObj.columns==null || myObj.products==null){
+            document.getElementById('if-not-get').innerHTML=`Please make sure you've asked according to the given dataset or recheck your spellings`;
+          }
+          else{
+            google.charts.load("current", {packages:['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+            function drawChart() {
+             /* var data = google.visualization.arrayToDataTable([
+                ["Element", "Density", { role: "style" } ],
+                ["Copper", 8.94, "#b87333"],
+                ["Silver", 10.49, "silver"],
+                ["Gold", 19.30, "gold"],
+                ["Platinum", 21.45, "color: #e5e4e2"]
+              ]);
+
+              var view = new google.visualization.DataView(data);
+              view.setColumns([0, 1,
+                              { calc: "stringify",
+                                sourceColumn: 1,
+                                type: "string",
+                                role: "annotation" },
+                              2]);*/
+                              
+              /*var key = "products"; 
+              var ar = Object.entries(resp.responseJSON[key]).map(([a, b]) => [a,b]);
+              console.log(ar);*/
+              var data = new google.visualization.DataTable();
+              data.addColumn('string', 'Product');
+              var time=myObj.time;
+              for( var i=0; i<time.length;i++){
+              data.addColumn('number', time[i]);
+              }
+              data.addRows(myObj.rows);
+
+              var options = {
+                width: 900,
+                height: 400,
+                bar: {groupWidth: "95%"},
+                legend: { position: "none" },
+              };
+              var chart = new google.visualization.ColumnChart(document.getElementById("myChart3"));
+              chart.draw(data, options);
+          }
+          }
         }
           });
 });

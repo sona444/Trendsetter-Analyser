@@ -3,6 +3,15 @@ from difflib import SequenceMatcher
 def similar(a, b):
     return SequenceMatcher(None, a, b).ratio()
     
+def common_member(a, b):
+    a_set = set(a)
+    b_set = set(b)
+ 
+    if (a_set & b_set):
+        return(a_set & b_set)
+    else:
+        return None
+
 def check_product_name(list_of_columns):
     check={}
     for columns in list_of_columns:

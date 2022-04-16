@@ -23,12 +23,9 @@
 
 </head>
 
-<body class="{% block body_class %}{% endblock body_class %}">
+<body class="{% block body_class %}{% endblock body_class %}" style="    background-image: linear-gradient(to right,#d63384, #6f42c1);">
 
     <div id="page">
-      <script>
-        AOS.init();
-      </script>
         {% include 'includes/header.html' %}
 
         {% block content %}{% endblock content %}
