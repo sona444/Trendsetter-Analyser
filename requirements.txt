@@ -27,14 +27,10 @@ itsdangerous==2.1.1
 Jinja2==3.0.3
 jmespath==0.10.0
 joblib==1.1.0
-kiwisolver==1.4.0
 Mako==1.2.0
 MarkupSafe==2.1.1
-matplotlib==3.5.1
-minio==7.1.5
 multidict==6.0.2
 nltk==3.7
-numpy==1.22.3
 openpyxl==3.0.9
 packaging==21.3
 pandas==1.4.1

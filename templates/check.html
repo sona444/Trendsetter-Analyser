@@ -18,6 +18,7 @@
     <section>
         <div class="container">
             <div class="row">
+            {% if structured %}
             <form  class="was-validated" style="margin-bottom:45px;"id="textToSpeech">
                  <div class="mb-3">
                     <label for="Name" class="form-label" style="color:white; margin-top:10px;">What do you want from the given dataset?</label>
@@ -34,9 +35,11 @@
                     {% endif %}
                     <input type="submit" id="upload" value="Submit"><span class="loader1" style="margin-bottom:-10px; top:1% !important; left:1% !important;"><span class="loader-inner"></span></span>
                 </div>
+                <div id="empty-info"></div>
                 <div id="myChart3" style="float:left;"></div>
                 <div id="if-not-get"></div>
             </form>
+            {% endif %}
             <form  class="was-validated" style="margin-bottom:45px;" id="product-details" >
                  <div class="mb-3">
                     <label for="Name" class="form-label"style="color:white; margin-top:10px;">Get Insight about a product</label>
@@ -89,14 +92,58 @@ $(document).on('submit', '#textToSpeech', function(e){
         complete: function(resp){
           const myObj = JSON.parse(resp.responseText);
           console.log(myObj);
+          document.getElementById('empty-info').innerHTML='';
           $("#btn-send").prop("disabled", false); 
           $(".loader1").css("visibility","hidden");
           if (myObj.columns==null || myObj.products==null){
             document.getElementById('if-not-get').innerHTML=`Please make sure you've asked according to the given dataset or recheck your spellings`;
           }
           else{
+            const empty_years=[];
+            let time_check=Object.assign([], myObj.time);
             google.charts.load("current", {packages:['corechart']});
             google.charts.setOnLoadCallback(drawChart);
+            for(var i=0; i<myObj.rows.length;i++){
+              for(var j=0; j<myObj.rows[i].length;j++){
+                if (j==0){
+                  product_name=myObj.rows[i][j];
+                }
+                else{
+                  console.log(myObj.rows[i],myObj.rows[i][j]);
+                  if (myObj.rows[i][j]==0){
+                    var m = Math.min(...time_check);
+                    empty_years.push(m);
+                    console.log(time_check,myObj.time,m,empty_years);
+                    var index = time_check.indexOf(m);
+
+                    if (index > -1) {
+                      time_check.splice(index, 1);
+                    }
+                  }
+                }
+              }
+            }
+            if(empty_years.length==1){
+                    var message=product_name+' has no data for the year '+empty_years[0];
+                    document.getElementById('empty-info').innerHTML=message;
+            }
+            else if(empty_years.length>1){
+                    var message=product_name+' has no data for the year ';
+                    for(var i=0;i<empty_years.length;i++){
+                      if (i<empty_years.length-2){
+                        message=message+empty_years[i]+', ';
+                      }
+                      else if (i==empty_years.length-2){
+                        message=message+empty_years[i]+' and ';
+                      }
+                      else{
+                        message=message+empty_years[i]+'.';
+                      }
+                    }
+                    document.getElementById('empty-info').innerHTML=message;
+                    console.log(message);
+            }
+
             function drawChart() {
               var data = new google.visualization.DataTable();
               data.addColumn('string', 'Product');
@@ -125,7 +172,6 @@ $(document).on('submit', '#product-details', function(e){
     let products = $('#product').val();
     let review = $('#review').val();
     let order_status = $('#order-status').val();
-    console.log(statement);
     jsondata={
       "products":products,
       "review":review,
@@ -142,7 +188,7 @@ $(document).on('submit', '#product-details', function(e){
           const myObj = JSON.parse(resp.responseText);
           console.log(myObj);
           $("#btn-send").prop("disabled", false); 
-          $(".loader2").css("visibility","visible");
+          $(".loader2").css("visibility","hidden");
           if (review=='True'){
             document.getElementById('myChart').style.height='500px';
             document.getElementById('myChart').style.width='100%';

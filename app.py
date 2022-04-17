@@ -2,8 +2,6 @@ from flask import Flask, render_template,request
 import pandas as pd
 import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-import matplotlib.pyplot as plt
-import numpy as np
 from dotenv import load_dotenv
 from openpyxl import load_workbook
 import sqlite3
@@ -29,7 +27,7 @@ def index():
 @app.route('/upload-dataset', methods=['GET','POST'])
 def main():
     f = request.files['file'] #File input
-    structured=request.form.get('structured')
+    structured=request.form.get('structure')
     if not f:
         return "No file attached"
 
@@ -118,7 +116,10 @@ def main():
     result = cursor.fetchall()
     global products
     products=set(product[0] for product in result) # List of products fetched to be listed on page
-    return render_template('check.html', products=list(products), final_report=data_report, db=filename_for_database)
+    if structured=='structured':
+        return render_template('check.html', products=list(products), final_report=data_report, db=filename_for_database, structured=True)
+    else:
+        return render_template('check.html', products=list(products), final_report=data_report, db=filename_for_database)
 
 @app.route('/get-insights', methods=['GET','POST'])
 def insights():
@@ -170,7 +171,6 @@ def query_convert():
     cursor=con.cursor()
     words_in_statement = word_tokenize(statement)
     pos=nltk.pos_tag(words_in_statement)
-    print(pos)
     possible_columns=[]
     time=[]
     verb_possibility='no'
@@ -198,7 +198,6 @@ def query_convert():
     vals={}
     for i in possible_columns:
         if len(i)>1:
-            print("loop entered")
             vals[i]=[]
             pro[i]=[]
             for column in columns:
@@ -224,7 +223,6 @@ def query_convert():
                 product.append(val[i])
         else:
             common_find=list(common_find)
-            print('common----',list(common_find))
 
     for i in columns:
         if 'date' in i.lower():
@@ -232,7 +230,6 @@ def query_convert():
 
     date_columns=str(date_column[0])
     if vals and common_find:
-        print("------------")
         for i in vals.values():
             v=i[0]
             print (i,v)
@@ -249,59 +246,57 @@ def query_convert():
             
             cursor.execute('SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= ? ',(pros,))
             data=list(cursor.fetchall())
-            print(pros,data[1:10])
             year_wise={}
             for details in data:
                 date=pd.to_datetime(details[1])
                 if time != []:
-                    print(date.year, end=' ')
                     if date.year not in time:
                         data.remove(details)
 
                         continue
             
-                if str(date.year) in year_wise:
-                    year_wise[str(date.year)].append(details[0])
+                if date.year in year_wise:
+                    year_wise[date.year].append(details[0])
                 else:
-                    year_wise[str(date.year)]=[details[0]]
-            print(year_wise,'///////////////////////////')
+                    year_wise[date.year]=[details[0]]
             for i in year_wise.keys():
                 year_under_consideration=year_wise[i]
                 finall=sum(year_under_consideration) / len(year_under_consideration)
-                year_wise[str(i)]=finall
-                print(finall)
-            print(year_wise)
+                year_wise[i]=finall
             chart_rows.append(pros)
             no_time=False
             if time!=[]:
-                print(time,year_wise,'checkkkkkkkkkkkkkkkk')
                 for i in time:
-                    if str(i) not in list(year_wise.keys()):
-                        year_wise[str(i)]=0
+                    if i not in list(year_wise.keys()):
+                        year_wise[i]=0
                 print(year_wise)
             else:
                 no_time=True
-            for i in year_wise.keys():
-                chart_rows.append(year_wise[str(i)])
+            year_wise_sorted={}
+            while year_wise!={}:
+                year_wise_sorted[min(year_wise.keys())]=year_wise[min(year_wise.keys())]
+                year_wise.pop(min(year_wise.keys()))
+            print(year_wise_sorted)
+            for i in year_wise_sorted.keys():
+                chart_rows.append(year_wise_sorted[i])
                 if no_time==True:
                     time.append(i)
             
             final_details[pros]=year_wise
             rows.append(chart_rows)
-        
-        return {'columns':vals,'products':final_details,'time':time,'rows':rows}
+        print(time)
+        time_sort=sorted(time)
+        return {'columns':vals,'products':final_details,'time':time_sort,'rows':rows}
 
     elif vals and not common_find and pro:
         for i in vals.values():
             v=i[0]
-            print (i,v)
         final_details={}
         if time!=[]:
             for i in range(min(time),max(time)+1):
                     if i not in time:
                         time.append(i)
         rows=[]
-        print(pro)
         for pros in pro.values():
             chart_rows=[]
             cursor.execute('SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= ? ',(pros[0],))
@@ -316,50 +311,42 @@ def query_convert():
                         continue
             
                 if date.year in year_wise:
-                    year_wise[str(date.year)].append(details[0])
+                    year_wise[date.year].append(details[0])
                 else:
-                    year_wise[str(date.year)]=[details[0]]
+                    year_wise[date.year]=[details[0]]
                         
             for i in year_wise.keys():
                 year_under_consideration=year_wise[i]
                 finall=sum(year_under_consideration) / len(year_under_consideration)
-                year_wise[str(i)]=finall
-                print(finall)
+                year_wise[i]=finall
             no_time=False
             if time!=[]:
-                print(time,year_wise,'checkkkkkkkkkkkkkkkk')
                 for i in time:
-                    if str(i) not in list(year_wise.keys()):
-                        year_wise[str(i)]=0
+                    if i not in list(year_wise.keys()):
+                        year_wise[i]=0
+                print(year_wise)
             else:
                 no_time=True
-            print(year_wise)
-            chart_rows.append(pros)
+            year_wise_sorted={}
+            while year_wise!={}:
+                year_wise_sorted[min(year_wise.keys())]=year_wise[min(year_wise.keys())]
+                year_wise.pop(min(year_wise.keys()))
+            print(year_wise_sorted)
+            chart_rows.append(pros[0])
                 
-            for i in year_wise.keys():
-                chart_rows.append(year_wise[str(i)])
+            for i in year_wise_sorted.keys():
+                chart_rows.append(year_wise_sorted[i])
                 if no_time==True:
                     time.append(i)
             
-            final_details[pros]=year_wise
+            final_details[pros[0]]=year_wise
             rows.append(chart_rows)
-        
-        return {'columns':vals,'products':final_details,'time':time,'rows':rows}
-    elif not vals and common_find:
-        return {'columns':None,'products':list(common_find)}
-    elif not vals and not common_find and not pro:
-        return {'columns':None,"products":None}
+        print(time)
+        time_sort=sorted(time)
+        return {'columns':vals,'products':final_details,'time':time_sort,'rows':rows}
+    else:
+        return {'columns':None,'products':None,'time':None,'rows':None}
 
 
-
-# def checked(jsondata):
-#     statement=jsondata.get('statement')
-#     print(statement)
-#     sid=SentimentIntensityAnalyzer()
-#     sa=sid.polarity_scores(str(statement))
-#     for k in sa:
-#             print(k,sa[k])
-#     return sa
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)
