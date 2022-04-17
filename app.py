@@ -29,6 +29,7 @@ def index():
 @app.route('/upload-dataset', methods=['GET','POST'])
 def main():
     f = request.files['file'] #File input
+    structured=request.form.get('structured')
     if not f:
         return "No file attached"
 
@@ -109,9 +110,9 @@ def main():
         final_name=final_name.lower().replace(")","_")
         Dataframe.rename(columns={column:final_name}, inplace=True)
     #Data preprocessing END
-    Dataframe.to_sql(name='Dataset',con=con,if_exists='replace') # Dataset converted to RDBMS table
+    # Dataframe.to_sql(name='Dataset',con=con,if_exists='replace') # Dataset converted to RDBMS table
 
-    con.commit()
+    # con.commit()
     
     cursor.execute('select "product_name" from Dataset;')
     result = cursor.fetchall()
@@ -229,7 +230,7 @@ def query_convert():
         if 'date' in i.lower():
             date_column.append(i)
 
-
+    date_columns=str(date_column[0])
     if vals and common_find:
         print("------------")
         for i in vals.values():
@@ -242,7 +243,7 @@ def query_convert():
                     if i not in time:
                         time.append(i)
         rows=[]
-        date_columns=str(date_column[0])
+        
         for pros in common_find:
             chart_rows=[]
             

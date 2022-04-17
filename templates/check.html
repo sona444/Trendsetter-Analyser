@@ -20,7 +20,7 @@
             <div class="row">
             <form  class="was-validated" style="margin-bottom:45px;"id="textToSpeech">
                  <div class="mb-3">
-                    <label for="Name" class="form-label">What do you want from the given dataset?</label>
+                    <label for="Name" class="form-label" style="color:white; margin-top:10px;">What do you want from the given dataset?</label>
                     <input type="text" class="form-control" id="statement" required />
                     <div class="valid-feedback"></div>
                     <div class="invalid-feedback"></div>
@@ -32,14 +32,14 @@
                     {% if db %}
                         <input type=text hidden value={{db}} name="db" id="db">
                     {% endif %}
-                    <input type="submit" id="upload" value="Submit">
+                    <input type="submit" id="upload" value="Submit"><span class="loader1" style="margin-bottom:-10px; top:1% !important; left:1% !important;"><span class="loader-inner"></span></span>
                 </div>
                 <div id="myChart3" style="float:left;"></div>
                 <div id="if-not-get"></div>
             </form>
             <form  class="was-validated" style="margin-bottom:45px;" id="product-details" >
                  <div class="mb-3">
-                    <label for="Name" class="form-label">Get Insight about a product</label>
+                    <label for="Name" class="form-label"style="color:white; margin-top:10px;">Get Insight about a product</label>
                     {% if products %}
                     <select name="products" id="product">
                         {% for product in products %}
@@ -52,7 +52,7 @@
                         <input type=text hidden value={{value}} name="{{keys}}" id="{{keys}}">
                         {% endfor %}
                     {% endif %}
-                    <input type="submit" id="upload" value="Submit">
+                    <input type="submit" id="upload" value="Submit"><span class="loader2" style="margin-bottom:-10px; top:1% !important; left:1% !important;"><span class="loader-inner"></span></span>
                 </div>
             </form>
         <div id="myChart" style="float:left;"></div>
@@ -64,6 +64,8 @@
     </section>
 </main>
 <script>
+$(".loader1").css("visibility","hidden");
+$(".loader2").css("visibility","hidden");
 $(document).on('submit', '#textToSpeech', function(e){
     e.preventDefault();
     var form = $('#textToSpeech');
@@ -79,6 +81,7 @@ $(document).on('submit', '#textToSpeech', function(e){
       "db":db
     }
     $("#btn-send").prop("disabled", true);
+    $(".loader1").css("visibility","visible");
     $.ajax({
       type: "POST",
       data: jsondata,
@@ -87,6 +90,7 @@ $(document).on('submit', '#textToSpeech', function(e){
           const myObj = JSON.parse(resp.responseText);
           console.log(myObj);
           $("#btn-send").prop("disabled", false); 
+          $(".loader1").css("visibility","hidden");
           if (myObj.columns==null || myObj.products==null){
             document.getElementById('if-not-get').innerHTML=`Please make sure you've asked according to the given dataset or recheck your spellings`;
           }
@@ -94,25 +98,6 @@ $(document).on('submit', '#textToSpeech', function(e){
             google.charts.load("current", {packages:['corechart']});
             google.charts.setOnLoadCallback(drawChart);
             function drawChart() {
-             /* var data = google.visualization.arrayToDataTable([
-                ["Element", "Density", { role: "style" } ],
-                ["Copper", 8.94, "#b87333"],
-                ["Silver", 10.49, "silver"],
-                ["Gold", 19.30, "gold"],
-                ["Platinum", 21.45, "color: #e5e4e2"]
-              ]);
-
-              var view = new google.visualization.DataView(data);
-              view.setColumns([0, 1,
-                              { calc: "stringify",
-                                sourceColumn: 1,
-                                type: "string",
-                                role: "annotation" },
-                              2]);*/
-                              
-              /*var key = "products"; 
-              var ar = Object.entries(resp.responseJSON[key]).map(([a, b]) => [a,b]);
-              console.log(ar);*/
               var data = new google.visualization.DataTable();
               data.addColumn('string', 'Product');
               var time=myObj.time;
@@ -146,7 +131,9 @@ $(document).on('submit', '#product-details', function(e){
       "review":review,
       "order_status":order_status
     }
+    $(".loader2").css("visibility","visible");
     $("#btn-send").prop("disabled", true);
+    $(".loader-wrapper").fadeOut("slow");
     $.ajax({
       type: "POST",
       data: jsondata,
@@ -155,7 +142,7 @@ $(document).on('submit', '#product-details', function(e){
           const myObj = JSON.parse(resp.responseText);
           console.log(myObj);
           $("#btn-send").prop("disabled", false); 
-
+          $(".loader2").css("visibility","visible");
           if (review=='True'){
             document.getElementById('myChart').style.height='500px';
             document.getElementById('myChart').style.width='100%';

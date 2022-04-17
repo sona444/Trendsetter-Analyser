@@ -36,49 +36,96 @@ input#file-upload-button{
     color: #e20074;
     border-radius: 8px;
 }
-.drag-area{
-  border: 2px dashed #fff;
-  background-color: #5256ad;
-  height: 500px;
-  width: 700px;
-  border-radius: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
+
+body {
+background-color: #242F3F;
 }
-.drag-area.active{
-  border: 2px solid #fff;
+
+.loader-wrapper{
+  background-color:#E20074;
+  height: 100vh;
+  width: 100vw;
+  visibility:none;
 }
-.drag-area .icon{
-  font-size: 100px;
-  color: #fff;
+
+.loader {
+display: inline-block;
+width: 30px;
+height: 30px;
+position: relative;
+border: 4px solid #Fff;
+top: 50%;
+animation: loader 2s infinite ease;
 }
-.drag-area header{
-  font-size: 30px;
-  font-weight: 500;
-  color: #fff;
+
+.loader1 {
+  display: inline-block;
+  width: 30px;
+  height: 30px;
+  position: relative;
+  border: 4px solid #Fff;
+  top: 50%;
+  animation: loader 2s infinite ease;
+  }
+
+  .loader2 {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    position: relative;
+    border: 4px solid #Fff;
+    top: 50%;
+    animation: loader 2s infinite ease;
+    }
+
+.loader-inner {
+vertical-align: top;
+display: inline-block;
+width: 100%;
+background-color: #fff;
+animation: loader-inner 2s infinite ease-in;
 }
-.drag-area span{
-  font-size: 25px;
-  font-weight: 500;
-  color: #fff;
-  margin: 10px 0 15px 0;
+
+@keyframes loader {
+0% {
+  transform: rotate(0deg);
 }
-.drag-area button{
-  padding: 10px 25px;
-  font-size: 20px;
-  font-weight: 500;
-  border: none;
-  outline: none;
-  background: #fff;
-  color: #5256ad;
-  border-radius: 5px;
-  cursor: pointer;
+
+25% {
+  transform: rotate(180deg);
 }
-.drag-area img{
+
+50% {
+  transform: rotate(180deg);
+}
+
+75% {
+  transform: rotate(360deg);
+}
+
+100% {
+  transform: rotate(360deg);
+}
+}
+
+@keyframes loader-inner {
+0% {
+  height: 0%;
+}
+
+25% {
+  height: 0%;
+}
+
+50% {
   height: 100%;
-  width: 100%;
-  object-fit: cover;
-  border-radius: 5px;
+}
+
+75% {
+  height: 100%;
+}
+
+100% {
+  height: 0%;
+}
 }
