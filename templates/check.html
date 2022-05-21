@@ -55,6 +55,9 @@
                         <input type=text hidden value={{value}} name="{{keys}}" id="{{keys}}">
                         {% endfor %}
                     {% endif %}
+                    {% if db %}
+                        <input type=text hidden value={{db}} name="db" id="db">
+                    {% endif %}
                     <input type="submit" id="upload" value="Submit"><span class="loader2" style="margin-bottom:-10px; top:1% !important; left:1% !important;"><span class="loader-inner"></span></span>
                 </div>
             </form>
@@ -172,10 +175,12 @@ $(document).on('submit', '#product-details', function(e){
     let products = $('#product').val();
     let review = $('#review').val();
     let order_status = $('#order-status').val();
+    let db = $('#db').val();
     jsondata={
       "products":products,
       "review":review,
-      "order_status":order_status
+      "order_status":order_status,
+      "db":db
     }
     $(".loader2").css("visibility","visible");
     $("#btn-send").prop("disabled", true);

@@ -8,7 +8,6 @@ import sqlite3
 import utils
 from nltk.tokenize import word_tokenize
 import nltk
-from statistics import mean
 
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
@@ -108,9 +107,9 @@ def main():
         final_name=final_name.lower().replace(")","_")
         Dataframe.rename(columns={column:final_name}, inplace=True)
     #Data preprocessing END
-    # Dataframe.to_sql(name='Dataset',con=con,if_exists='replace') # Dataset converted to RDBMS table
+    Dataframe.to_sql(name='Dataset',con=con,if_exists='replace') # Dataset converted to RDBMS table
 
-    # con.commit()
+    con.commit()
     
     cursor.execute('select "product_name" from Dataset;')
     result = cursor.fetchall()
@@ -124,6 +123,8 @@ def main():
 @app.route('/get-insights', methods=['GET','POST'])
 def insights():
     #called for insights of products
+    db=request.form.get("db")
+    print(db)
     global filename_for_database
     product=str(request.form.get('products'))
     products=(product,)
@@ -349,4 +350,4 @@ def query_convert():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)

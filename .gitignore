@@ -1,7 +1,6 @@
 /venv
 /minio
 .env
-Dockerfile
 /migrations
 .minio.sys
 /db
