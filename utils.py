@@ -28,6 +28,22 @@ def check_product_image(list_of_columns):
     fin_max = max(check, key=check.get)
     return fin_max    
 
+def check_product_country(list_of_columns):
+    check={}
+    for columns in list_of_columns:
+        check[columns]=similar('Order Country',columns)
+    print(check)
+    fin_max = max(check, key=check.get)
+    return fin_max  
+
+def check_product_city(list_of_columns):
+    check={}
+    for columns in list_of_columns:
+        check[columns]=similar('Order City',columns)
+    print(check)
+    fin_max = max(check, key=check.get)
+    return fin_max  
+
 def check_review_text(list_of_columns):
     check={}
     for columns in list_of_columns:

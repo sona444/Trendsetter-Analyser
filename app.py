@@ -8,7 +8,13 @@ import sqlite3
 import utils
 from nltk.tokenize import word_tokenize
 import nltk
-
+import locationtagger
+import spacy
+  
+nltk.download('maxent_ne_chunker')
+nltk.download('words')
+nltk.download('treebank')
+nltk.download('maxent_treebank_pos_tagger')
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 load_dotenv()
@@ -69,6 +75,22 @@ def main():
         possible_values=['product image' , 'Product Image', 'image' , 'Image']
         for values in possible_values:
             Dataframe.rename(columns={values:'product_image'}, inplace=True)
+    if 'Order Country' not in list_of_columns and 'order country' not in list_of_columns:
+        product_country=utils.check_product_country(list_of_columns=list_of_columns)
+        print(product_country)
+        Dataframe.rename(columns={product_country:'order_country'}, inplace=True)
+    else:
+        possible_values=['Order Country', 'order country' ]
+        for values in possible_values:
+            print(values)
+            Dataframe.rename(columns={values:'order_country'}, inplace=True)        
+    if 'Order City' not in list_of_columns and 'order city' not in list_of_columns:
+        product_city=utils.check_product_city(list_of_columns=list_of_columns)
+        Dataframe.rename(columns={product_city:'order_city'}, inplace=True)
+    else:
+        possible_values=['Order City' , 'order city' ]
+        for values in possible_values:
+            Dataframe.rename(columns={values:'order_city'}, inplace=True)  
     if 'review text' not in list_of_columns and 'Reviews' not in list_of_columns and 'Review Text' not in list_of_columns and 'reviews' not in list_of_columns and 'review.text' not in list_of_columns:
         review_text=utils.check_review_text(list_of_columns=list_of_columns)
         if review_text:
@@ -107,6 +129,8 @@ def main():
         final_name=final_name.lower().replace(")","_")
         Dataframe.rename(columns={column:final_name}, inplace=True)
     #Data preprocessing END
+
+    #Uncomment to enter a new dataset
     Dataframe.to_sql(name='Dataset',con=con,if_exists='replace') # Dataset converted to RDBMS table
 
     con.commit()
@@ -124,7 +148,6 @@ def main():
 def insights():
     #called for insights of products
     db=request.form.get("db")
-    print(db)
     global filename_for_database
     product=str(request.form.get('products'))
     products=(product,)
@@ -132,7 +155,7 @@ def insights():
     order_status=request.form.get('order_status')
     #For unstructured dataset Reviews are listed based on the result of sentiment analysis
     if Reviews=='True':
-        filename_for_database="db/Datafiniti_Amazon_Consumer_Reviews_of_Amazon_Products_May19.db"
+        filename_for_database=db
         con=sqlite3.connect(filename_for_database) #connecting to the database
         cursor=con.cursor()
         cursor.execute('SELECT review_text FROM Dataset WHERE product_name = ?',products)
@@ -150,7 +173,7 @@ def insights():
 
     #For structured dataset OrderStatuses are listed:
     if order_status=='True':
-        filename_for_database="db/DataCoSupplyChainDataset.db"
+        filename_for_database=db
         con=sqlite3.connect(filename_for_database) #connecting to the database
         cursor=con.cursor()
         cursor.execute('SELECT product_name, product_image, order_status FROM Dataset WHERE product_name = ?',products)
@@ -167,13 +190,20 @@ def insights():
 @app.route('/get-query', methods=['GET','POST'])
 def query_convert():
     statement=request.form.get('statement')
+    country_name=[]
+    place_entity = locationtagger.find_locations(text = statement)
+    if place_entity.countries:
+        country_name = place_entity.countries
+
     db=request.form.get("db")
     con=sqlite3.connect(db) #connecting to the database
     cursor=con.cursor()
     words_in_statement = word_tokenize(statement)
     pos=nltk.pos_tag(words_in_statement)
+    print(pos)
     possible_columns=[]
     time=[]
+    region=[]
     verb_possibility='no'
     for i in pos:
         if i[1]=='VB'or i[1]=='VBD' or i[1]=='VBG' or i[1]=='VBN' or i[1]=='VBP' or i[1]=='VBZ':
@@ -183,6 +213,7 @@ def query_convert():
                 possible_columns.append(verb_possibility)
             verb_possibility='no'
             possible_columns.append(i[0])
+            region.append(i[0])
         if i[1]=='CD':
             verb_possibility='no'
             time.append(int(i[0]))
@@ -197,6 +228,25 @@ def query_convert():
     data=cursor.fetchall()
     pro={}
     vals={}
+    cities=[]
+    countries=[]
+    cursor.execute('SELECT DISTINCT order_country FROM Dataset')
+    country=cursor.fetchall()
+    for i in country:
+        countries.append(i[0])
+    cursor.execute('SELECT DISTINCT order_city FROM Dataset')
+    city=cursor.fetchall()
+    for i in city:
+        cities.append(i[0])
+    city_name=[]
+    for i in region:
+        if i.capitalize() in cities:
+            city_name.append(i)
+    if not country_name:
+        for i in region:
+            if i.capitalize() in countries:
+                country_name.append(i)
+
     for i in possible_columns:
         if len(i)>1:
             vals[i]=[]
@@ -226,7 +276,9 @@ def query_convert():
             common_find=list(common_find)
 
     for i in columns:
+        print(i)
         if 'date' in i.lower():
+            print(i,'yes')
             date_column.append(i)
 
     date_columns=str(date_column[0])
@@ -241,15 +293,33 @@ def query_convert():
                     if i not in time:
                         time.append(i)
         rows=[]
-        
+        data=[]
         for pros in common_find:
             chart_rows=[]
-            
-            cursor.execute('SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= ? ',(pros,))
-            data=list(cursor.fetchall())
+            if country_name:
+                for i in country_name:
+                    print(country_name)
+                    if city_name:
+                        for j in city_name:
+                            print(city_name)
+                            query='SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= "'+pros+'" AND order_country = '+i.capitalize()+' AND order_city ='+j.capitalize()+';'
+                            print(query)
+                            cursor.execute('SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= ? AND order_city = ? AND order_country = ?',('"'+pros+'"', j.capitalize(), i.capitalize()))
+                            data.append(list(cursor.fetchall()))
+                    else:
+                        query='SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= '+pros+' AND order_country = '+i.capitalize()+';'
+                        print(query)
+                        cursor.execute('SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= ? AND order_country = ?',(pros, i.capitalize()))
+                        data.append(list(cursor.fetchall()))
+            else:
+                cursor.execute('SELECT '+v+', '+date_columns+' FROM Dataset WHERE product_name= ? ',(pros,))
+                data=list(cursor.fetchall())
+                print(data)
+            print(data)
             year_wise={}
             for details in data:
-                date=pd.to_datetime(details[1])
+                print(details)
+                date=pd.to_datetime(details[0][1])
                 if time != []:
                     if date.year not in time:
                         data.remove(details)
@@ -262,6 +332,7 @@ def query_convert():
                     year_wise[date.year]=[details[0]]
             for i in year_wise.keys():
                 year_under_consideration=year_wise[i]
+                breakpoint()
                 finall=sum(year_under_consideration) / len(year_under_consideration)
                 year_wise[i]=finall
             chart_rows.append(pros)
@@ -270,14 +341,12 @@ def query_convert():
                 for i in time:
                     if i not in list(year_wise.keys()):
                         year_wise[i]=0
-                print(year_wise)
             else:
                 no_time=True
             year_wise_sorted={}
             while year_wise!={}:
                 year_wise_sorted[min(year_wise.keys())]=year_wise[min(year_wise.keys())]
                 year_wise.pop(min(year_wise.keys()))
-            print(year_wise_sorted)
             for i in year_wise_sorted.keys():
                 chart_rows.append(year_wise_sorted[i])
                 if no_time==True:
@@ -285,7 +354,6 @@ def query_convert():
             
             final_details[pros]=year_wise
             rows.append(chart_rows)
-        print(time)
         time_sort=sorted(time)
         return {'columns':vals,'products':final_details,'time':time_sort,'rows':rows}
 
@@ -325,14 +393,12 @@ def query_convert():
                 for i in time:
                     if i not in list(year_wise.keys()):
                         year_wise[i]=0
-                print(year_wise)
             else:
                 no_time=True
             year_wise_sorted={}
             while year_wise!={}:
                 year_wise_sorted[min(year_wise.keys())]=year_wise[min(year_wise.keys())]
                 year_wise.pop(min(year_wise.keys()))
-            print(year_wise_sorted)
             chart_rows.append(pros[0])
                 
             for i in year_wise_sorted.keys():
@@ -342,7 +408,6 @@ def query_convert():
             
             final_details[pros[0]]=year_wise
             rows.append(chart_rows)
-        print(time)
         time_sort=sorted(time)
         return {'columns':vals,'products':final_details,'time':time_sort,'rows':rows}
     else:
