@@ -7,7 +7,19 @@
 #myChart2 div{
   height:500px !important;
 }
-
+#points li{
+  /*list-style-image:url('./static/img/arrow.gif');*/
+  margin: 0;
+	padding: 36px 0 36px 84px;
+	list-style: none;
+	background-image: url("./static/img/arrow.gif");
+	background-repeat: no-repeat;
+	background-position: left center;
+	background-size: 40px;
+}
+#monthly{
+  display:none;
+}
 </style>{% endblock stylesheets %}
 
 {% block body_class %} landing-page {% endblock body_class %}
@@ -36,7 +48,28 @@
                     <input type="submit" id="upload" value="Submit"><span class="loader1" style="margin-bottom:-10px; top:1% !important; left:1% !important;"><span class="loader-inner"></span></span>
                 </div>
                 <div id="empty-info"></div>
-                <div id="myChart3" style="float:left;"></div>
+                <div class="row">
+                  <ul id="points" style="color:white; margin-top:10px;width:100%;"></ul>
+                <div class="col-md-6">
+                  <div id="myChart3" style="float:left;"></div>
+                </div>
+                  <div class='col-md-6' id="monthly">
+                    <form >
+                      <label for="Name" class="form-label" style="color:white; margin-top:10px;width:100%;">Want to see monthly trend for your product(s)?</label>
+                      <select id="product-select"></select>
+                      <select id="year-select"></select>
+                    </form>
+                    <div id="myChart4" style="float:left;"></div>
+                  </div>
+                  </div>
+                  <div class='col-md-12'>
+                  <form id="locationwise">
+                      <label for="Name" class="form-label" style="color:white; margin-top:10px;width:100%;">Want to see location-wise trend for your product(s)?</label>
+                      <select id="product-select2"></select>
+                      <select id="year-select2"></select>
+                    </form>
+                    <div id="myChart5" style="float:left;"></div>
+                  </div>
                 <div id="if-not-get"></div>
             </form>
             {% endif %}
@@ -72,6 +105,8 @@
 <script>
 $(".loader1").css("visibility","hidden");
 $(".loader2").css("visibility","hidden");
+$("#monthly").css("display","none");
+$("#locationwise").css("display","none");
 $(document).on('submit', '#textToSpeech', function(e){
     e.preventDefault();
     var form = $('#textToSpeech');
@@ -102,51 +137,127 @@ $(document).on('submit', '#textToSpeech', function(e){
             document.getElementById('if-not-get').innerHTML=`Please make sure you've asked according to the given dataset or recheck your spellings`;
           }
           else{
-            const empty_years=[];
-            let time_check=Object.assign([], myObj.time);
             google.charts.load("current", {packages:['corechart']});
-            google.charts.setOnLoadCallback(drawChart);
-            for(var i=0; i<myObj.rows.length;i++){
-              for(var j=0; j<myObj.rows[i].length;j++){
-                if (j==0){
-                  product_name=myObj.rows[i][j];
-                }
-                else{
-                  console.log(myObj.rows[i],myObj.rows[i][j]);
-                  if (myObj.rows[i][j]==0){
-                    var m = Math.min(...time_check);
-                    empty_years.push(m);
-                    console.log(time_check,myObj.time,m,empty_years);
-                    var index = time_check.indexOf(m);
-
-                    if (index > -1) {
-                      time_check.splice(index, 1);
-                    }
-                  }
-                }
+            $("#monthly").css("display","block");
+            let time_check=Object.assign([], myObj.time);
+            const month=Object.assign(myObj.month);
+            const location=Object.assign(myObj.location);
+            let comments=Object.assign(myObj.comments);
+            let productinput="";
+            let yearinput="";
+            let commentPoints="";
+            if (comments!=null){
+              for(let i=0;i<comments.length;i++){
+                commentPoints=commentPoints.concat('<li>'+comments[i]+'</li>');
               }
             }
-            if(empty_years.length==1){
-                    var message=product_name+' has no data for the year '+empty_years[0];
-                    document.getElementById('empty-info').innerHTML=message;
+            document.getElementById("points").innerHTML=commentPoints;
+            for(let key of Object.keys(month)){
+              productinput=productinput.concat('<option value="'+key+'">'+key+'</option>');
+              for(let j of Object.keys(month[key])){
+                if (! yearinput.includes('<option value="'+j+'">'+j+'</option>')){
+                  yearinput=yearinput.concat('<option value="'+j+'">'+j+'</option>');
+                }
             }
-            else if(empty_years.length>1){
-                    var message=product_name+' has no data for the year ';
-                    for(var i=0;i<empty_years.length;i++){
-                      if (i<empty_years.length-2){
-                        message=message+empty_years[i]+', ';
-                      }
-                      else if (i==empty_years.length-2){
-                        message=message+empty_years[i]+' and ';
-                      }
-                      else{
-                        message=message+empty_years[i]+'.';
-                      }
-                    }
-                    document.getElementById('empty-info').innerHTML=message;
-                    console.log(message);
+             }
+             let productinput2="";
+            let yearinput2="";
+             for(let key of Object.keys(location)){
+              $("#locationwise").css("display","block");
+              if(location[key]!=null){
+              productinput2=productinput2.concat('<option value="'+key+'">'+key+'</option>');
+              for(let j of Object.keys(location[key])){
+                if (! yearinput2.includes('<option value="'+j+'">'+j+'</option>')){
+                  yearinput2=yearinput2.concat('<option value="'+j+'">'+j+'</option>');
+                }
             }
-
+             }
+             else{
+              $("#locationwise").css("display","none");
+             }
+             }
+             if(productinput2!=""){
+            document.getElementById('product-select2').innerHTML=productinput2;
+            document.getElementById('year-select2').innerHTML=yearinput2;
+            google.charts.setOnLoadCallback(drawChart3);
+            document.getElementById('myChart5').style.height='800px';
+            document.getElementById('myChart5').style.width='100%';
+            
+             $('#product-select2').on('change', function() {
+              console.log("yes");
+              drawChart3();
+            });
+            $('#year-select2').on('change', function() {
+              console.log("yes");
+              drawChart3();
+            });
+             }
+             console.log(productinput,yearinput)
+            document.getElementById('product-select').innerHTML=productinput;
+            document.getElementById('year-select').innerHTML=yearinput;
+    
+            google.charts.setOnLoadCallback(drawChart);
+            google.charts.setOnLoadCallback(drawChart2);
+            document.getElementById('myChart3').style.height='500px';
+            document.getElementById('myChart3').style.width='100%';
+            document.getElementById('myChart4').style.height='500px';
+            document.getElementById('myChart4').style.width='100%';
+            $('#product-select').on('change', function() {
+              console.log("yes");
+              drawChart2();
+            });
+            $('#year-select').on('change', function() {
+              console.log("yes");
+              drawChart2();
+            });
+/* --------------month wise chart code starts ------------------*/
+            function drawChart2(){
+            key=$('#product-select').val();
+            j=$('#year-select').val();
+            console.log(month[key],key);
+            if(month[key][j]!=null){
+            var ar = Object.entries(month[key][j]).map(([a, b]) => [a, Number(b)]);
+                console.log(ar);
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'Year');
+                data.addColumn('number', 'Value');
+                data.addRows(ar);
+                var options = {
+                  title:'Month-wise data for '+key+' for the year '+j+'.',
+                  is3D:true
+                };
+            var chart = new google.visualization.PieChart(document.getElementById('myChart4'));
+              chart.draw(data, options);
+            }
+            else{
+              document.getElementById('myChart4').innerHTML="No Data found for "+key+" for the year "+j+".";
+            }
+            }
+/* -------------- month wise chart code ends ----------*/
+/* -------------- state wise chart code starts ----------*/
+            function drawChart3(){
+            key=$('#product-select2').val();
+            j=$('#year-select2').val();
+            if(location[key][j]!=null){
+            var ar = Object.entries(location[key][j]).map(([a, b]) => [a, Number(b)]);
+                console.log(ar);
+                var data = new google.visualization.DataTable();
+                data.addColumn('string', 'State');
+                data.addColumn('number', 'Number of Products Sold');
+                data.addRows(ar);
+                var options = {
+                  title:'Location-wise data for '+key+' for the year '+j+'.',
+                  is3D:true,
+                };
+            var chart = new google.visualization.BarChart(document.getElementById('myChart5'));
+              chart.draw(data, options);
+            }
+            else{
+              document.getElementById('myChart5').innerHTML="No Data found for "+key+" for the year "+j+".";
+            }
+            }
+/* -------------- state wise chart code ends ----------*/
+/* -------------- year wise chart code starts ----------*/
             function drawChart() {
               var data = new google.visualization.DataTable();
               data.addColumn('string', 'Product');
@@ -157,18 +268,19 @@ $(document).on('submit', '#textToSpeech', function(e){
               data.addRows(myObj.rows);
 
               var options = {
-                width: 900,
-                height: 400,
-                bar: {groupWidth: "95%"},
-                legend: { position: "none" },
+                title:'Year-wise Trends Representation',
+                is3D:true,
+                height:'500px'
               };
               var chart = new google.visualization.ColumnChart(document.getElementById("myChart3"));
               chart.draw(data, options);
           }
+/* -------------- year wise chart code ends ----------*/
           }
         }
           });
 });
+
 $(document).on('submit', '#product-details', function(e){
     e.preventDefault();
     var form = $('#product-details');
@@ -249,5 +361,45 @@ $(document).on('submit', '#product-details', function(e){
         
           });
 });
+/*for(var i=0; i<myObj.rows.length;i++){
+              for(var j=0; j<myObj.rows[i].length;j++){
+                if (j==0){
+                  product_name=myObj.rows[i][j];
+                }
+                else{
+                  console.log(myObj.rows[i],myObj.rows[i][j]);
+                  if (myObj.rows[i][j]==0){
+                    var m = Math.min(...time_check);
+                    empty_years.push(m);
+                    console.log(time_check,myObj.time,m,empty_years);
+                    var index = time_check.indexOf(m);
+
+                    if (index > -1) {
+                      time_check.splice(index, 1);
+                    }
+                  }
+                }
+              }
+            }
+            if(empty_years.length==1){
+                    var message=product_name+' has no data for the year '+empty_years[0];
+                    document.getElementById('empty-info').innerHTML=message;
+            }
+            else if(empty_years.length>1){
+                    var message=product_name+' has no data for the year ';
+                    for(var i=0;i<empty_years.length;i++){
+                      if (i<empty_years.length-2){
+                        message=message+empty_years[i]+', ';
+                      }
+                      else if (i==empty_years.length-2){
+                        message=message+empty_years[i]+' and ';
+                      }
+                      else{
+                        message=message+empty_years[i]+'.';
+                      }
+                    }
+                    document.getElementById('empty-info').innerHTML=message;
+                    console.log(message);
+            }*/
 </script>
 {% endblock content %}
